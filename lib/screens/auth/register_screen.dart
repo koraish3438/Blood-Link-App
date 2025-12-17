@@ -10,74 +10,65 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // ব্লাড গ্রুপের লিস্ট
   final List<String> bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
   String? selectedGroup;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryRed),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, iconTheme: const IconThemeData(color: Colors.black)),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Create Account",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryRed),
-              ),
-              const SizedBox(height: 10),
-              const Text("Join our community and save lives", style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 30),
+              const Text("Create Account", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
+              const Text("Join BloodLink and save lives", style: TextStyle(color: Colors.grey)),
 
-              // Input Fields
-              const CustomTextField(hintText: "Full Name", icon: Icons.person),
-              const SizedBox(height: 15),
-              const CustomTextField(hintText: "Email", icon: Icons.email),
-              const SizedBox(height: 15),
-              const CustomTextField(hintText: "Phone Number", icon: Icons.phone),
-              const SizedBox(height: 15),
+              const SizedBox(height: 40),
+              const CustomTextField(hintText: "Full Name", icon: Icons.person_outline),
+              const SizedBox(height: 16),
+              const CustomTextField(hintText: "Email or Phone", icon: Icons.email_outlined),
+              const SizedBox(height: 16),
 
-              // Blood Group Dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    hint: const Text("Select Blood Group"),
-                    isExpanded: true,
-                    value: selectedGroup,
-                    items: bloodGroups.map((String group) {
-                      return DropdownMenuItem<String>(
-                        value: group,
-                        child: Text(group),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedGroup = value;
-                      });
-                    },
+              // Blood Group & Location (Row or Column)
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          hint: const Text("Blood"),
+                          value: selectedGroup,
+                          items: bloodGroups.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                          onChanged: (v) => setState(() => selectedGroup = v),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    flex: 2,
+                    child: CustomTextField(hintText: "City / Area", icon: Icons.location_on_outlined),
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 15),
-              const CustomTextField(hintText: "Password", icon: Icons.lock, isPassword: true),
+              const SizedBox(height: 16),
+              const CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true),
+              const SizedBox(height: 16),
+              const CustomTextField(hintText: "Confirm Password", icon: Icons.lock_reset, isPassword: true),
+
               const SizedBox(height: 30),
 
-              // Register Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -86,13 +77,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     backgroundColor: AppColors.primaryRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
-                    // পরে এখানে রেজিস্ট্রেশন লজিক লিখবো
-                  },
-                  child: const Text("Register", style: TextStyle(color: Colors.white, fontSize: 18)),
+                  onPressed: () {},
+                  child: const Text("Create Account", style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
+
               const SizedBox(height: 20),
+              Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Already have an account? "),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text("Login", style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
