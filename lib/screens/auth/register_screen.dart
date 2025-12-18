@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../services/firebase_auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,11 +14,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final List<String> bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
   String? selectedGroup;
 
+  // কন্ট্রোলারগুলো
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController(); // নতুন
+
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _locationController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, iconTheme: const IconThemeData(color: Colors.black)),
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black)
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -26,14 +50,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const Text("Create Account", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
               const Text("Join BloodLink and save lives", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 30),
 
-              const SizedBox(height: 40),
-              const CustomTextField(hintText: "Full Name", icon: Icons.person_outline),
-              const SizedBox(height: 16),
-              const CustomTextField(hintText: "Email or Phone", icon: Icons.email_outlined),
+              // Full Name
+              CustomTextField(hintText: "Full Name", icon: Icons.person_outline, controller: _nameController),
               const SizedBox(height: 16),
 
-              // Blood Group & Location (Row or Column)
+              // Email
+              CustomTextField(hintText: "Email", icon: Icons.email_outlined, controller: _emailController, keyboardType: TextInputType.emailAddress),
+              const SizedBox(height: 16),
+
+              // Blood Group & Location Row
               Row(
                 children: [
                   Expanded(
@@ -48,6 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: DropdownButton<String>(
                           hint: const Text("Blood"),
                           value: selectedGroup,
+                          isExpanded: true,
                           items: bloodGroups.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                           onChanged: (v) => setState(() => selectedGroup = v),
                         ),
@@ -55,34 +83,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     flex: 2,
-                    child: CustomTextField(hintText: "City / Area", icon: Icons.location_on_outlined),
+                    child: CustomTextField(hintText: "City / Area", icon: Icons.location_on_outlined, controller: _locationController),
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
-              const CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true),
-              const SizedBox(height: 16),
-              const CustomTextField(hintText: "Confirm Password", icon: Icons.lock_reset, isPassword: true),
 
+              // Password
+              CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true, controller: _passwordController),
+              const SizedBox(height: 16),
+
+              // Confirm Password
+              CustomTextField(hintText: "Confirm Password", icon: Icons.lock_reset, isPassword: true, controller: _confirmPasswordController),
               const SizedBox(height: 30),
 
+              // Register Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: AppColors.primaryRed,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                   ),
-                  onPressed: () {},
-                  child: const Text("Create Account", style: TextStyle(color: Colors.white, fontSize: 18)),
+                  onPressed: _isLoading ? null : () async {
+                    // ভ্যালিডেশন
+                    if (selectedGroup == null || _nameController.text.isEmpty || _emailController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
+                      return;
+                    }
+                    if (_passwordController.text != _confirmPasswordController.text) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match!"), backgroundColor: Colors.orange));
+                      return;
+                    }
+
+                    setState(() => _isLoading = true);
+
+                    String? result = await FirebaseAuthService().registerUser(
+                      email: _emailController.text.trim(),
+                      password: _passwordController.text.trim(),
+                      name: _nameController.text.trim(),
+                      bloodGroup: selectedGroup!,
+                      location: _locationController.text.trim(),
+                    );
+
+                    setState(() => _isLoading = false);
+
+                    if (result == "Success") {
+                      Navigator.pop(context); // সফল হলে লগইন পেজে ফিরে যাবে
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Please Login.")));
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result!), backgroundColor: Colors.red));
+                    }
+                  },
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Create Account", style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
+
+              // Login Link (আপনার আগের ডিজাইন অনুযায়ী)
               Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -90,11 +154,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const Text("Already have an account? "),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text("Login", style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                          "Login",
+                          style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

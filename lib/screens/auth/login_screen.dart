@@ -2,10 +2,28 @@ import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_constants.dart';
 import '../../widgets/custom_textfield.dart';
+import '../../services/firebase_auth_service.dart';
+import '../home/home_screen.dart';
 import 'register_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,12 +35,16 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 100),
-              // Logo & Title Section
+              // Logo & Title
               const Icon(Icons.bloodtype, size: 80, color: AppColors.primaryRed),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 AppConstants.appName,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryRed),
+                style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryRed
+                ),
               ),
               const Text("Connecting donors, saving lives", style: TextStyle(color: Colors.grey)),
 
@@ -33,12 +55,25 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Input Fields
-              const CustomTextField(hintText: "Email or Phone Number", icon: Icons.email_outlined),
+              // Email Field
+              CustomTextField(
+                hintText: "Email",
+                icon: Icons.email_outlined,
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 16),
-              const CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true),
 
-              // Forgot Password
+              // Password Field
+              CustomTextField(
+                hintText: "Password",
+                icon: Icons.lock_outline,
+                isPassword: true,
+                controller: _passwordController,
+              ),
+
+              const SizedBox(height: 10),
+              // Forgot Password (Optional design element)
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -57,26 +92,69 @@ class LoginScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 2,
                   ),
-                  onPressed: () {},
-                  child: const Text("Login", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                  onPressed: _isLoading ? null : () async {
+                    if(_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Please fill all fields"))
+                      );
+                      return;
+                    }
+
+                    setState(() => _isLoading = true);
+
+                    String? result = await FirebaseAuthService().loginUser(
+                        _emailController.text.trim(),
+                        _passwordController.text.trim()
+                    );
+
+                    setState(() => _isLoading = false);
+
+                    if (result == "Success") {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const HomeScreen())
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result!), backgroundColor: Colors.red),
+                      );
+                    }
+                  },
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                      "Login",
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)
+                  ),
                 ),
               ),
 
               const SizedBox(height: 40),
 
-              // Bottom Section
+              // --- এই অংশটি আপনার দরকার ছিল (Register Link) ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text("Don't have an account? "),
                   GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen())),
-                    child: const Text("Register", style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                      );
+                    },
+                    child: const Text(
+                      "Register",
+                      style: TextStyle(
+                        color: AppColors.primaryRed,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

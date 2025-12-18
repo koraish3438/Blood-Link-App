@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart'; // এই ইমপোর্টটি নিশ্চিত করুন
+import 'firebase_options.dart';
 import 'utils/app_colors.dart';
 import 'utils/app_constants.dart';
+import 'providers/auth_provider.dart'; // আপনার AuthProvider ইমপোর্ট করুন
 import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BloodLinkApp());
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(
+    // MultiProvider কে সবার উপরে (Root) রাখতে হবে
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // এখানে অন্য প্রোভাইডার থাকলে যোগ করবেন (যেমন: BloodProvider)
+      ],
+      child: const BloodLinkApp(),
+    ),
+  );
 }
 
 class BloodLinkApp extends StatelessWidget {

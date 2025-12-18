@@ -35,10 +35,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
   provider: ^6.1.2
-  firebase_core: ^3.11.0
-  firebase_auth: ^5.5.0
-  cloud_firestore: ^5.6.1
+  firebase_core: ^3.15.2
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.12
   flutter_svg: ^2.0.10
+  firebase_database: ^11.3.10
   
 
 dev_dependencies:
