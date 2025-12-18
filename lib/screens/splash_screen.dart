@@ -1,8 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_constants.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'auth/login_screen.dart';
+import 'home/home_screen.dart';
+import '../utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -15,12 +16,23 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    _navigate();
+  }
+
+  void _navigate() async {
+    await Future.delayed(const Duration(seconds: 2));
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    });
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
 
   @override
@@ -28,24 +40,10 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: AppColors.primaryRed,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.bloodtype, size: 100, color: Colors.white),
-            const SizedBox(height: 20),
-            Text(
-              AppConstants.appName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              AppConstants.splashTagline,
-              style: const TextStyle(color: Colors.white70, fontSize: 16),
-            ),
-          ],
+        child: Text(
+          "BloodLink",
+          style: TextStyle(
+              fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     );

@@ -14,7 +14,14 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isAuthenticated => _user != null;
 
+  // ✅ Updated logout
   Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
+    try {
+      await FirebaseAuth.instance.signOut();
+      _user = null; // clear user locally
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Logout error: $e");
+    }
   }
 }

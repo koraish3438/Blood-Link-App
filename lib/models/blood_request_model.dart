@@ -5,7 +5,7 @@ class BloodRequestModel {
   final String units;
   final String contact;
   final String userId;
-  final int timestamp;
+  final int timestamp; // Unix timestamp in milliseconds
 
   BloodRequestModel({
     required this.id,
@@ -17,6 +17,7 @@ class BloodRequestModel {
     required this.timestamp,
   });
 
+  // ✅ Factory method
   factory BloodRequestModel.fromMap(String id, Map<dynamic, dynamic> map) {
     return BloodRequestModel(
       id: id,
@@ -27,5 +28,12 @@ class BloodRequestModel {
       userId: map['userId'] ?? '',
       timestamp: map['timestamp'] ?? 0,
     );
+  }
+
+  // ✅ Add isUrgent getter
+  bool get isUrgent {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    // যদি request 24 ঘন্টার ভিতরে আসে → urgent
+    return (now - timestamp) <= 24 * 60 * 60 * 1000;
   }
 }

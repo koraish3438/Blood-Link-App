@@ -11,7 +11,6 @@ class DatabaseService {
     try {
       final snapshot = await _db.child('users').child(uid).get();
       if (snapshot.exists) {
-        // ডাটাবেস থেকে পাওয়া ম্যাপটিকে UserModel-এ কনভার্ট করা
         return UserModel.fromMap(snapshot.value as Map<dynamic, dynamic>);
       }
       return null;
@@ -42,7 +41,8 @@ class DatabaseService {
         'units': request.units,
         'contact': request.contact,
         'userId': request.userId,
-        'timestamp': ServerValue.timestamp, // সার্ভার টাইমস্ট্যাম্প
+        'donorId': request.userId, // optional, adjust if needed
+        'timestamp': ServerValue.timestamp,
       });
     } catch (e) {
       print("Error adding blood request: $e");
@@ -56,14 +56,56 @@ class DatabaseService {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
       if (map == null) return [];
 
-      // ম্যাপ এন্ট্রিগুলোকে BloodRequestModel-এর লিস্টে রূপান্তর
       return map.entries.map((e) {
         return BloodRequestModel.fromMap(
-            e.key.toString(), // এন্ট্রির কী হচ্ছে রিকোয়েস্ট আইডি
+            e.key.toString(),
             e.value as Map<dynamic, dynamic>
         );
       }).toList()
-        ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // লেটেস্ট রিকোয়েস্ট উপরে দেখাবে
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     });
+  }
+
+  // ✅ ৫. getUserStats (Dynamic Profile stats)
+  Future<Map<String, int>> getUserStats(String uid) async {
+    int donated = 0;
+    int requests = 0;
+    int followers = 0;
+
+    try {
+      // Donated = where donorId == uid
+      final donatedSnap = await _db.child('blood_requests').get();
+      if (donatedSnap.exists) {
+        final map = donatedSnap.value as Map<dynamic, dynamic>;
+        donated = map.values
+            .where((v) => (v as Map)['donorId'] == uid)
+            .length;
+      }
+
+      // Requests = where userId == uid
+      final requestsSnap = await _db.child('blood_requests').get();
+      if (requestsSnap.exists) {
+        final map = requestsSnap.value as Map<dynamic, dynamic>;
+        requests = map.values
+            .where((v) => (v as Map)['userId'] == uid)
+            .length;
+      }
+
+      // Followers = assuming followers stored in 'followers' node
+      final followersSnap = await _db.child('followers').child(uid).get();
+      if (followersSnap.exists) {
+        final map = followersSnap.value as Map<dynamic, dynamic>;
+        followers = map.length;
+      }
+
+    } catch (e) {
+      print("Error fetching user stats: $e");
+    }
+
+    return {
+      'donated': donated,
+      'requests': requests,
+      'followers': followers,
+    };
   }
 }
