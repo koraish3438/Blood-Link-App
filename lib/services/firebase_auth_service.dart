@@ -5,13 +5,14 @@ class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
-  // রেজিস্ট্রেশন ফাংশন
+  // রেজিস্ট্রেশন ফাংশন (ফোন নাম্বারসহ আপডেট)
   Future<String?> registerUser({
     required String email,
     required String password,
     required String name,
     required String bloodGroup,
     required String location,
+    required String phone, // নতুন
   }) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
@@ -20,13 +21,14 @@ class FirebaseAuthService {
       User? user = result.user;
 
       if (user != null) {
-        // রিয়েল-টাইম ডাটাবেসে তথ্য সেভ
+        // রিয়েল-টাইম ডাটাবেসে ফোন নাম্বারসহ তথ্য সেভ
         await _dbRef.child("users").child(user.uid).set({
           "uid": user.uid,
           "name": name,
           "email": email,
           "bloodGroup": bloodGroup,
           "location": location,
+          "phone": phone, // ফোন নাম্বার সেভ
           "isAvailable": true,
           "createdAt": ServerValue.timestamp,
         });

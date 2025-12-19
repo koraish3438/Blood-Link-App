@@ -5,188 +5,180 @@ import '../../services/database_service.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_colors.dart';
 import '../auth/login_screen.dart';
+import 'edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String getLastDonationText(int timestamp) {
+    if (timestamp == 0) return "No donation history yet";
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final days = DateTime.now().difference(date).inDays;
+    if (days == 0) return "Donated today";
+    if (days == 1) return "Donated 1 day ago";
+    return "Last donated $days days ago";
+  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final String uid = authProvider.user?.uid ?? "";
+    final uid = authProvider.user?.uid ?? "";
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text("My Profile"),
-        elevation: 0,
+        title: const Text("Profile"),
+        centerTitle: true,
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
-        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              final user = await DatabaseService().getUserData(uid);
+              if (user == null) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
+              ).then((_) => setState(() {}));
+            },
+          )
+        ],
       ),
       body: FutureBuilder<UserModel?>(
         future: DatabaseService().getUserData(uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryRed));
-          }
-          final user = snapshot.data;
-          if (user == null) return const Center(child: Text("User not found"));
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.primaryRed));
+          final user = snapshot.data!;
 
-          return FutureBuilder<Map<String, int>>(
-            future: DatabaseService().getUserStats(uid),
-            builder: (context, statsSnapshot) {
-              int donated = 0, requests = 0, followers = 0;
-              if (statsSnapshot.hasData) {
-                donated = statsSnapshot.data!['donated'] ?? 0;
-                requests = statsSnapshot.data!['requests'] ?? 0;
-                followers = statsSnapshot.data!['followers'] ?? 0;
-              }
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-                child: Column(
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Profile Image
+                Stack(
+                  alignment: Alignment.bottomRight,
                   children: [
-                    // ✅ প্রোফাইল পিকচার ডিজাইন আগের মতো রাখা হয়েছে
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primaryRed, Color(0xFFB71C1C)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: const CircleAvatar(
-                        radius: 55,
-                        backgroundColor: Colors.transparent,
-                        child: Icon(Icons.person, size: 60, color: Colors.white),
-                      ),
+                    CircleAvatar(
+                      radius: 55,
+                      backgroundColor: AppColors.primaryRed,
+                      child: const Icon(Icons.person, size: 60, color: Colors.white),
                     ),
-                    const SizedBox(height: 15),
-
-                    // ✅ নাম (এখন কালো রঙে)
-                    Text(
-                      user.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // ✅ ইমেইল (এখন গাঢ় ধূসর/কালো রঙে)
-                    Text(
-                      user.email,
-                      style: const TextStyle(
-                        color: Colors.black54,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Donation Stats Dynamic
-                    Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      elevation: 3,
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatColumn("Donated", donated),
-                            _buildStatColumn("Requests", requests),
-                            _buildStatColumn("Followers", followers),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Info Cards
-                    _buildProfileCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
-                    _buildProfileCard(Icons.location_on, "Location", user.location),
-                    _buildProfileCard(Icons.verified_user, "Status", "Active Donor"),
-
-                    const SizedBox(height: 40),
-
-                    // Logout Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryRed,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: () async {
-                          await authProvider.logout();
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (_) => const LoginScreen()),
-                                (route) => false,
-                          );
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text(
-                          "Logout",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white,
+                      child: IconButton(
+                        icon: const Icon(Icons.camera_alt, size: 18, color: AppColors.primaryRed),
+                        onPressed: () {},
                       ),
                     ),
                   ],
                 ),
-              );
-            },
+                const SizedBox(height: 15),
+                Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(user.email, style: const TextStyle(color: Colors.grey)),
+                const SizedBox(height: 20),
+
+                // Stats (Dynamic)
+                FutureBuilder<Map<String, int>>(
+                  future: DatabaseService().getUserStats(uid),
+                  builder: (context, statsSnap) {
+                    if (!statsSnap.hasData) return const SizedBox();
+                    final stats = statsSnap.data!;
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStat("Donated", stats['donated'] ?? 0),
+                            _buildStat("Requests", stats['requests'] ?? 0),
+                            _buildStat("Helped", stats['helped'] ?? 0),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // Availability
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  child: SwitchListTile(
+                    title: const Text("Available to Donate", style: TextStyle(fontWeight: FontWeight.bold)),
+                    activeColor: AppColors.primaryRed,
+                    value: user.isAvailable,
+                    onChanged: (value) async {
+                      await DatabaseService().updateUserAvailability(uid, value);
+                      setState(() {});
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+                _infoCard(Icons.history, "Last Donation", getLastDonationText(user.lastDonationDate)),
+                const SizedBox(height: 10),
+
+                _infoCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
+                _infoCard(Icons.phone, "Phone Number", user.phone),
+                _infoCard(Icons.location_on, "Location", user.location),
+                _infoCard(Icons.location_city, "Address", user.address),
+                _infoCard(Icons.cake, "Age", "${user.age}"),
+                _infoCard(Icons.monitor_weight, "Weight", "${user.weight} kg"),
+
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    onPressed: () async {
+                      await authProvider.logout();
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (route) => false,
+                      );
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text("Logout", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildProfileCard(IconData icon, String title, String value) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
-      color: Colors.white,
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primaryRed, size: 28),
-        title: Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-        subtitle: Text(value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-      ),
-    );
-  }
-
-  Widget _buildStatColumn(String label, int count) {
+  Widget _buildStat(String label, int value) {
     return Column(
       children: [
-        Text(
-          count.toString(),
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryRed,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(value.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
+        Text(label, style: const TextStyle(color: Colors.grey)),
       ],
     );
   }
+
+  Widget _infoCard(IconData icon, String title, String value) => Card(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    child: ListTile(
+      leading: Icon(icon, color: AppColors.primaryRed),
+      title: Text(title, style: const TextStyle(color: Colors.grey)),
+      subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+    ),
+  );
 }

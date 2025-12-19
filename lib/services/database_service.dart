@@ -3,10 +3,9 @@ import '../models/blood_request_model.dart';
 import '../models/user_model.dart';
 
 class DatabaseService {
-  // ডাটাবেস রেফারেন্স তৈরি
   final _db = FirebaseDatabase.instance.ref();
 
-  // ১. নির্দিষ্ট ইউজারের ডাটা আনা (Profile Screen-এর জন্য)
+  // ১. নির্দিষ্ট ইউজারের ডাটা আনা
   Future<UserModel?> getUserData(String uid) async {
     try {
       final snapshot = await _db.child('users').child(uid).get();
@@ -20,7 +19,29 @@ class DatabaseService {
     }
   }
 
-  // ২. সব রক্তদাতাদের লিস্ট আনা (Donors List)
+  // ২. প্রোফাইল এডিট/আপডেট করা (নতুন যোগ করা হয়েছে)
+  Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
+    try {
+      await _db.child('users').child(uid).update(data);
+    } catch (e) {
+      print("Error updating profile: $e");
+      rethrow;
+    }
+  }
+
+  // ৩. ইউজারের এভেইল্যাবিলিটি আপডেট করা
+  Future<void> updateUserAvailability(String uid, bool isAvailable) async {
+    try {
+      await _db.child('users').child(uid).update({
+        'isAvailable': isAvailable,
+      });
+    } catch (e) {
+      print("Error updating availability: $e");
+      rethrow;
+    }
+  }
+
+  // ৪. সব রক্তদাতাদের লিস্ট আনা
   Stream<List<UserModel>> getDonors() {
     return _db.child('users').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
@@ -32,7 +53,7 @@ class DatabaseService {
     });
   }
 
-  // ৩. নতুন রক্তের রিকোয়েস্ট পাঠানো (Request Blood)
+  // ৫. নতুন রক্তের রিকোয়েস্ট পাঠানো
   Future<void> addBloodRequest(BloodRequestModel request) async {
     try {
       await _db.child('blood_requests').push().set({
@@ -41,7 +62,8 @@ class DatabaseService {
         'units': request.units,
         'contact': request.contact,
         'userId': request.userId,
-        'donorId': request.userId, // optional, adjust if needed
+        'donorId': '',
+        'status': 'pending',
         'timestamp': ServerValue.timestamp,
       });
     } catch (e) {
@@ -50,7 +72,7 @@ class DatabaseService {
     }
   }
 
-  // ৪. সব রক্তের রিকোয়েস্টের রিয়েল-টাইম লিস্ট আনা (Home Screen-এর জন্য)
+  // ৬. সব রিকোয়েস্টের রিয়েল-টাইম লিস্ট আনা
   Stream<List<BloodRequestModel>> getBloodRequests() {
     return _db.child('blood_requests').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
@@ -66,38 +88,20 @@ class DatabaseService {
     });
   }
 
-  // ✅ ৫. getUserStats (Dynamic Profile stats)
+  // ৭. ইউজার স্ট্যাটাস (Dynamic Stats)
   Future<Map<String, int>> getUserStats(String uid) async {
     int donated = 0;
     int requests = 0;
-    int followers = 0;
+    int helped = 0;
 
     try {
-      // Donated = where donorId == uid
-      final donatedSnap = await _db.child('blood_requests').get();
-      if (donatedSnap.exists) {
-        final map = donatedSnap.value as Map<dynamic, dynamic>;
-        donated = map.values
-            .where((v) => (v as Map)['donorId'] == uid)
-            .length;
+      final bloodRef = await _db.child('blood_requests').get();
+      if (bloodRef.exists) {
+        final map = bloodRef.value as Map<dynamic, dynamic>;
+        donated = map.values.where((v) => (v as Map)['donorId'] == uid && v['status'] == 'completed').length;
+        requests = map.values.where((v) => (v as Map)['userId'] == uid).length;
+        helped = donated;
       }
-
-      // Requests = where userId == uid
-      final requestsSnap = await _db.child('blood_requests').get();
-      if (requestsSnap.exists) {
-        final map = requestsSnap.value as Map<dynamic, dynamic>;
-        requests = map.values
-            .where((v) => (v as Map)['userId'] == uid)
-            .length;
-      }
-
-      // Followers = assuming followers stored in 'followers' node
-      final followersSnap = await _db.child('followers').child(uid).get();
-      if (followersSnap.exists) {
-        final map = followersSnap.value as Map<dynamic, dynamic>;
-        followers = map.length;
-      }
-
     } catch (e) {
       print("Error fetching user stats: $e");
     }
@@ -105,7 +109,7 @@ class DatabaseService {
     return {
       'donated': donated,
       'requests': requests,
-      'followers': followers,
+      'helped': helped,
     };
   }
 }

@@ -14,12 +14,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final List<String> bloodGroups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
   String? selectedGroup;
 
-  // কন্ট্রোলারগুলো
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(); // নতুন
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController(); // নতুন
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -27,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _locationController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -52,15 +53,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const Text("Join BloodLink and save lives", style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 30),
 
-              // Full Name
               CustomTextField(hintText: "Full Name", icon: Icons.person_outline, controller: _nameController),
               const SizedBox(height: 16),
 
-              // Email
               CustomTextField(hintText: "Email", icon: Icons.email_outlined, controller: _emailController, keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 16),
 
-              // Blood Group & Location Row
+              // নতুন ফোন নাম্বার ফিল্ড
+              CustomTextField(hintText: "Phone Number", icon: Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone),
+              const SizedBox(height: 16),
+
               Row(
                 children: [
                   Expanded(
@@ -91,15 +93,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Password
               CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true, controller: _passwordController),
               const SizedBox(height: 16),
 
-              // Confirm Password
               CustomTextField(hintText: "Confirm Password", icon: Icons.lock_reset, isPassword: true, controller: _confirmPasswordController),
               const SizedBox(height: 30),
 
-              // Register Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -109,8 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
                   ),
                   onPressed: _isLoading ? null : () async {
-                    // ভ্যালিডেশন
-                    if (selectedGroup == null || _nameController.text.isEmpty || _emailController.text.isEmpty) {
+                    if (selectedGroup == null || _nameController.text.isEmpty || _phoneController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
                       return;
                     }
@@ -127,12 +125,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       name: _nameController.text.trim(),
                       bloodGroup: selectedGroup!,
                       location: _locationController.text.trim(),
+                      phone: _phoneController.text.trim(), // ফোন পাঠানো হচ্ছে
                     );
 
                     setState(() => _isLoading = false);
 
                     if (result == "Success") {
-                      Navigator.pop(context); // সফল হলে লগইন পেজে ফিরে যাবে
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Please Login.")));
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result!), backgroundColor: Colors.red));
@@ -143,10 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       : const Text("Create Account", style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              // Login Link (আপনার আগের ডিজাইন অনুযায়ী)
               Center(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -154,10 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const Text("Already have an account? "),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text(
-                          "Login",
-                          style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)
-                      ),
+                      child: const Text("Login", style: TextStyle(color: AppColors.primaryRed, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
