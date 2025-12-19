@@ -20,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
         title: const Text("My Profile"),
         elevation: 0,
         backgroundColor: AppColors.primaryRed,
-        foregroundColor: Colors.white, // ✅ readable on red
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
       body: FutureBuilder<UserModel?>(
@@ -33,7 +33,6 @@ class ProfileScreen extends StatelessWidget {
           final user = snapshot.data;
           if (user == null) return const Center(child: Text("User not found"));
 
-          // ✅ Fetch dynamic stats from database
           return FutureBuilder<Map<String, int>>(
             future: DatabaseService().getUserStats(uid),
             builder: (context, statsSnapshot) {
@@ -45,11 +44,10 @@ class ProfileScreen extends StatelessWidget {
               }
 
               return SingleChildScrollView(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
                 child: Column(
                   children: [
-                    // Profile Header
+                    // ✅ প্রোফাইল পিকচার ডিজাইন আগের মতো রাখা হয়েছে
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -69,24 +67,27 @@ class ProfileScreen extends StatelessWidget {
                       child: const CircleAvatar(
                         radius: 55,
                         backgroundColor: Colors.transparent,
-                        child:
-                        Icon(Icons.person, size: 60, color: Colors.white),
+                        child: Icon(Icons.person, size: 60, color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 15),
+
+                    // ✅ নাম (এখন কালো রঙে)
                     Text(
                       user.name,
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white, // ✅ readable on red background
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 4),
+
+                    // ✅ ইমেইল (এখন গাঢ় ধূসর/কালো রঙে)
                     Text(
                       user.email,
                       style: const TextStyle(
-                        color: Colors.white70, // ✅ readable
+                        color: Colors.black54,
                         fontSize: 14,
                       ),
                     ),
@@ -114,12 +115,9 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 25),
 
                     // Info Cards
-                    _buildProfileCard(
-                        Icons.bloodtype, "Blood Group", user.bloodGroup),
-                    _buildProfileCard(
-                        Icons.location_on, "Location", user.location),
-                    _buildProfileCard(
-                        Icons.verified_user, "Status", "Active Donor"),
+                    _buildProfileCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
+                    _buildProfileCard(Icons.location_on, "Location", user.location),
+                    _buildProfileCard(Icons.verified_user, "Status", "Active Donor"),
 
                     const SizedBox(height: 40),
 
@@ -139,16 +137,14 @@ class ProfileScreen extends StatelessWidget {
                           await authProvider.logout();
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(
-                                builder: (_) => const LoginScreen()),
+                            MaterialPageRoute(builder: (_) => const LoginScreen()),
                                 (route) => false,
                           );
                         },
                         icon: const Icon(Icons.logout),
                         label: const Text(
                           "Logout",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
                     ),
@@ -162,7 +158,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // Profile Info Card
   Widget _buildProfileCard(IconData icon, String title, String value) {
     return Card(
       margin: const EdgeInsets.only(bottom: 15),
@@ -171,16 +166,13 @@ class ProfileScreen extends StatelessWidget {
       color: Colors.white,
       child: ListTile(
         leading: Icon(icon, color: AppColors.primaryRed, size: 28),
-        title: Text(title,
-            style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        title: Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         subtitle: Text(value,
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
       ),
     );
   }
 
-  // Donation stats column
   Widget _buildStatColumn(String label, int count) {
     return Column(
       children: [
@@ -193,10 +185,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
       ],
     );
   }

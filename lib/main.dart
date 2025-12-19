@@ -18,7 +18,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // যদি future এ অন্য provider থাকে, এখানে add করা যাবে
+        // ভবিষ্যতে BloodProvider এখানে যুক্ত হবে
       ],
       child: const BloodLinkApp(),
     ),
@@ -34,36 +34,24 @@ class BloodLinkApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: true,
         primaryColor: AppColors.primaryRed,
         scaffoldBackgroundColor: AppColors.background,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primaryRed,
-          elevation: 2,
-          titleTextStyle: TextStyle(
+        // Poppins Font Setup
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: GoogleFonts.poppins(
             fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryRed,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
+          iconTheme: const IconThemeData(color: Colors.black),
         ),
       ),
       home: const SplashScreen(),
-      // Optional: named routes for future navigation
-      routes: {
-        // '/login': (_) => const LoginScreen(),
-        // '/home': (_) => const HomeScreen(),
-      },
     );
   }
 }
