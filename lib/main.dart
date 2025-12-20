@@ -18,7 +18,6 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // ভবিষ্যতে BloodProvider এখানে যুক্ত হবে
       ],
       child: const BloodLinkApp(),
     ),
@@ -37,7 +36,6 @@ class BloodLinkApp extends StatelessWidget {
         useMaterial3: true,
         primaryColor: AppColors.primaryRed,
         scaffoldBackgroundColor: AppColors.background,
-        // Poppins Font Setup
         textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
@@ -51,7 +49,7 @@ class BloodLinkApp extends StatelessWidget {
           iconTheme: const IconThemeData(color: Colors.black),
         ),
       ),
-      home: const SplashScreen(),
+      home: const SplashScreen(), // Custom splash screen
     );
   }
 }
