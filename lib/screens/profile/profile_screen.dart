@@ -36,19 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final user = await DatabaseService().getUserData(uid);
-              if (user == null) return;
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
-              ).then((_) => setState(() {}));
-            },
-          )
-        ],
+        elevation: 0,
       ),
       body: FutureBuilder<UserModel?>(
         future: DatabaseService().getUserData(uid),
@@ -60,56 +48,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Profile Image
                 Stack(
                   alignment: Alignment.bottomRight,
                   children: [
-                    CircleAvatar(
-                      radius: 55,
-                      backgroundColor: AppColors.primaryRed,
-                      child: const Icon(Icons.person, size: 60, color: Colors.white),
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(colors: [AppColors.primaryRed, Color(0xFFB71C1C)]),
+                      ),
+                      child: const CircleAvatar(
+                        radius: 55,
+                        backgroundColor: AppColors.primaryRed,
+                        child: Icon(Icons.person, size: 60, color: Colors.white),
+                      ),
                     ),
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 18,
                       backgroundColor: Colors.white,
-                      child: IconButton(
-                        icon: const Icon(Icons.camera_alt, size: 18, color: AppColors.primaryRed),
-                        onPressed: () {},
-                      ),
+                      child: Icon(Icons.camera_alt, size: 18, color: AppColors.primaryRed),
                     ),
                   ],
                 ),
                 const SizedBox(height: 15),
-                Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
                 Text(user.email, style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 20),
-
-                // Stats (Dynamic)
+                const SizedBox(height: 25),
                 FutureBuilder<Map<String, int>>(
                   future: DatabaseService().getUserStats(uid),
                   builder: (context, statsSnap) {
-                    if (!statsSnap.hasData) return const SizedBox();
-                    final stats = statsSnap.data!;
+                    final stats = statsSnap.data ?? {'donated': 0, 'requests': 0, 'helped': 0};
                     return Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStat("Donated", stats['donated'] ?? 0),
-                            _buildStat("Requests", stats['requests'] ?? 0),
-                            _buildStat("Helped", stats['helped'] ?? 0),
+                            _buildStat("Donated", stats['donated']!),
+                            _buildStat("Requests", stats['requests']!),
+                            _buildStat("Helped", stats['helped']!),
                           ],
                         ),
                       ),
                     );
                   },
                 ),
-
-                const SizedBox(height: 16),
-
-                // Availability
+                const SizedBox(height: 20),
+                _buildActionTile(Icons.edit, "Edit Profile Information", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
+                  ).then((_) => setState(() {}));
+                }),
+                const SizedBox(height: 10),
                 Card(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   child: SwitchListTile(
@@ -122,40 +115,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 10),
                 _infoCard(Icons.history, "Last Donation", getLastDonationText(user.lastDonationDate)),
-                const SizedBox(height: 10),
-
                 _infoCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
                 _infoCard(Icons.phone, "Phone Number", user.phone),
                 _infoCard(Icons.location_on, "Location", user.location),
                 _infoCard(Icons.location_city, "Address", user.address),
-                _infoCard(Icons.cake, "Age", "${user.age}"),
-                _infoCard(Icons.monitor_weight, "Weight", "${user.weight} kg"),
-
-                const SizedBox(height: 30),
-                SizedBox(
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: _infoCard(Icons.cake, "Age", "${user.age}")),
+                    const SizedBox(width: 10),
+                    Expanded(child: _infoCard(Icons.monitor_weight, "Weight", "${user.weight} kg")),
+                  ],
+                ),
+                const SizedBox(height: 35),
+                Container(
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryRed, Color(0xFFB71C1C)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.primaryRed.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))
+                    ],
+                  ),
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryRed,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: () async {
                       await authProvider.logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                            (route) => false,
-                      );
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
                     },
                     icon: const Icon(Icons.logout, color: Colors.white),
-                    label: const Text("Logout", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    label: const Text("Logout Account", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                   ),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           );
@@ -167,18 +170,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildStat(String label, int value) {
     return Column(
       children: [
-        Text(value.toString(), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(value.toString(), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
       ],
     );
   }
 
+  Widget _buildActionTile(IconData icon, String title, VoidCallback onTap) => Card(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    child: ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: AppColors.primaryRed),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+    ),
+  );
+
   Widget _infoCard(IconData icon, String title, String value) => Card(
+    margin: const EdgeInsets.only(bottom: 10),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     child: ListTile(
       leading: Icon(icon, color: AppColors.primaryRed),
-      title: Text(title, style: const TextStyle(color: Colors.grey)),
-      subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+      subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
     ),
   );
 }
