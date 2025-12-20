@@ -36,10 +36,3 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/logo.png"
-
-flutter_native_splash:
-  color: "#B71C1C" # শুধুমাত্র background color, logo বাদ
-  android: true
-  ios: true
-  web: false
-  fullscreen: true
