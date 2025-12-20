@@ -40,8 +40,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        backgroundColor: AppColors.primaryRed,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryRed, // ব্যাকগ্রাউন্ড লাল
+        foregroundColor: Colors.white,         // টেক্সট ও আইকন সাদা
         centerTitle: true,
         elevation: 0,
       ),
@@ -123,13 +123,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryRed.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
               ),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -140,15 +133,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 onPressed: _isLoading ? null : _saveChanges,
                 child: _isLoading
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
-                    : const Text(
-                  "Save Changes",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text("Save Changes", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
               ),
             ),
             const SizedBox(height: 20),
@@ -178,9 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

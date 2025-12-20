@@ -26,7 +26,12 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Request Blood")),
+      appBar: AppBar(
+        title: const Text("Request Blood"),
+        backgroundColor: AppColors.primaryRed, // ব্যাকগ্রাউন্ড লাল
+        foregroundColor: Colors.white,         // টেক্সট ও আইকন সাদা
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -81,7 +86,7 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
                   setState(() => _isLoading = true);
 
                   final request = BloodRequestModel(
-                    id: '', // Push() এর সময় অটো আইডি জেনারেট হবে
+                    id: '',
                     bloodGroup: selectedGroup!,
                     location: _locationController.text.trim(),
                     units: _unitsController.text.trim(),
@@ -98,7 +103,7 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
                 },
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Post Request", style: TextStyle(color: Colors.white, fontSize: 18)),
+                    : const Text("Post Request", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

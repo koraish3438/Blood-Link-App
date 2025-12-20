@@ -32,8 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text("Profile"),
         centerTitle: true,
-        backgroundColor: AppColors.primaryRed,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primaryRed, // ব্যাকগ্রাউন্ড লাল
+        foregroundColor: Colors.white,         // টেক্সট ও আইকন সাদা
         elevation: 0,
       ),
       body: FutureBuilder<UserModel?>(
@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
-                  ).then((_) => setState(() {})); // রিফ্রেশ লজিক
+                  ).then((_) => setState(() {}));
                 }),
 
                 const SizedBox(height: 10),
@@ -114,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value: user.isAvailable,
                     onChanged: (value) async {
                       await DatabaseService().updateUserAvailability(uid, value);
-                      setState(() {}); // বাগ ফিক্স: সাথে সাথে UI আপডেট হবে
+                      setState(() {});
                     },
                   ),
                 ),
