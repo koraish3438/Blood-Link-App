@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart'; // এই লাইনটি debugPrint এর জন্য প্রয়োজন
 import '../models/blood_request_model.dart';
 import '../models/user_model.dart';
 
@@ -14,17 +15,17 @@ class DatabaseService {
       }
       return null;
     } catch (e) {
-      print("Error fetching user data: $e");
+      debugPrint("Error fetching user data: $e");
       return null;
     }
   }
 
-  // ২. প্রোফাইল এডিট/আপডেট করা (নতুন যোগ করা হয়েছে)
+  // ২. প্রোফাইল এডিট/আপডেট করা
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
       await _db.child('users').child(uid).update(data);
     } catch (e) {
-      print("Error updating profile: $e");
+      debugPrint("Error updating profile: $e");
       rethrow;
     }
   }
@@ -32,16 +33,14 @@ class DatabaseService {
   // ৩. ইউজারের এভেইল্যাবিলিটি আপডেট করা
   Future<void> updateUserAvailability(String uid, bool isAvailable) async {
     try {
-      await _db.child('users').child(uid).update({
-        'isAvailable': isAvailable,
-      });
+      await _db.child('users').child(uid).update({'isAvailable': isAvailable});
     } catch (e) {
-      print("Error updating availability: $e");
+      debugPrint("Error updating availability: $e");
       rethrow;
     }
   }
 
-  // ৪. সব রক্তদাতাদের লিস্ট আনা
+  // ৪. সব রক্তদাতাদের লিস্ট আনা (লজিক: শুধুমাত্র যারা Available)
   Stream<List<UserModel>> getDonors() {
     return _db.child('users').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
@@ -49,6 +48,7 @@ class DatabaseService {
 
       return map.values
           .map((v) => UserModel.fromMap(v as Map<dynamic, dynamic>))
+          .where((user) => user.isAvailable == true) // ফিল্টারিং লজিক
           .toList();
     });
   }
@@ -67,7 +67,7 @@ class DatabaseService {
         'timestamp': ServerValue.timestamp,
       });
     } catch (e) {
-      print("Error adding blood request: $e");
+      debugPrint("Error adding blood request: $e");
       rethrow;
     }
   }
@@ -80,8 +80,8 @@ class DatabaseService {
 
       return map.entries.map((e) {
         return BloodRequestModel.fromMap(
-            e.key.toString(),
-            e.value as Map<dynamic, dynamic>
+          e.key.toString(),
+          e.value as Map<dynamic, dynamic>,
         );
       }).toList()
         ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -95,15 +95,17 @@ class DatabaseService {
     int helped = 0;
 
     try {
-      final bloodRef = await _db.child('blood_requests').get();
-      if (bloodRef.exists) {
-        final map = bloodRef.value as Map<dynamic, dynamic>;
-        donated = map.values.where((v) => (v as Map)['donorId'] == uid && v['status'] == 'completed').length;
+      final snapshot = await _db.child('blood_requests').get();
+      if (snapshot.exists) {
+        final map = snapshot.value as Map<dynamic, dynamic>;
+        donated = map.values
+            .where((v) => (v as Map)['donorId'] == uid && v['status'] == 'completed')
+            .length;
         requests = map.values.where((v) => (v as Map)['userId'] == uid).length;
         helped = donated;
       }
     } catch (e) {
-      print("Error fetching user stats: $e");
+      debugPrint("Error fetching user stats: $e");
     }
 
     return {
@@ -111,5 +113,19 @@ class DatabaseService {
       'requests': requests,
       'helped': helped,
     };
+  }
+
+  // ৮. UID দিয়ে একক ইউজার fetch করা (AuthProvider এর জন্য)
+  Future<Map<String, dynamic>> getUserById(String uid) async {
+    try {
+      final snapshot = await _db.child("users/$uid").get();
+      if (snapshot.exists) {
+        return Map<String, dynamic>.from(snapshot.value as Map);
+      }
+      return {};
+    } catch (e) {
+      debugPrint("Error getUserById: $e");
+      return {};
+    }
   }
 }

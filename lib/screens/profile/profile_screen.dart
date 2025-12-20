@@ -19,9 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (timestamp == 0) return "No donation history yet";
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     final days = DateTime.now().difference(date).inDays;
-    if (days == 0) return "Donated today";
-    if (days == 1) return "Donated 1 day ago";
-    return "Last donated $days days ago";
+    return days == 0 ? "Donated today" : "Last donated $days days ago";
   }
 
   @override
@@ -41,8 +39,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: FutureBuilder<UserModel?>(
         future: DatabaseService().getUserData(uid),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.primaryRed));
-          final user = snapshot.data!;
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          final user = snapshot.data;
+          if (user == null) return const Center(child: Text("Error loading profile"));
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -71,9 +70,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 15),
-                Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+                Text(user.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 Text(user.email, style: const TextStyle(color: Colors.grey)),
                 const SizedBox(height: 25),
+
+                // Stats Card
                 FutureBuilder<Map<String, int>>(
                   future: DatabaseService().getUserStats(uid),
                   builder: (context, statsSnap) {
@@ -96,12 +97,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
+
                 _buildActionTile(Icons.edit, "Edit Profile Information", () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
-                  ).then((_) => setState(() {}));
+                  ).then((_) => setState(() {})); // রিফ্রেশ লজিক
                 }),
+
                 const SizedBox(height: 10),
                 Card(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -111,16 +114,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value: user.isAvailable,
                     onChanged: (value) async {
                       await DatabaseService().updateUserAvailability(uid, value);
-                      setState(() {});
+                      setState(() {}); // বাগ ফিক্স: সাথে সাথে UI আপডেট হবে
                     },
                   ),
                 ),
+
                 const SizedBox(height: 10),
                 _infoCard(Icons.history, "Last Donation", getLastDonationText(user.lastDonationDate)),
                 _infoCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
                 _infoCard(Icons.phone, "Phone Number", user.phone),
                 _infoCard(Icons.location_on, "Location", user.location),
                 _infoCard(Icons.location_city, "Address", user.address),
+
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -129,24 +134,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(child: _infoCard(Icons.monitor_weight, "Weight", "${user.weight} kg")),
                   ],
                 ),
+
                 const SizedBox(height: 35),
-                Container(
+                SizedBox(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primaryRed, Color(0xFFB71C1C)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(color: AppColors.primaryRed.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))
-                    ],
-                  ),
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
+                      backgroundColor: AppColors.primaryRed,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -158,7 +152,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     label: const Text("Logout Account", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                   ),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           );

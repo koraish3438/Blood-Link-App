@@ -1,24 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_model.dart';
+import '../services/database_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  User? _user;
-  User? get user => _user;
+  UserModel? _userModel;
+  UserModel? get user => _userModel;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   AuthProvider() {
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      _user = user;
+    _auth.authStateChanges().listen((firebaseUser) async {
+      if (firebaseUser != null) {
+        // Firebase থেকে UserModel load করা
+        final userMap = await DatabaseService().getUserById(firebaseUser.uid);
+        _userModel = UserModel.fromMap(userMap);
+      } else {
+        _userModel = null;
+      }
       notifyListeners();
     });
   }
 
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _userModel != null;
 
-  // ✅ Updated logout
+  // Logout
   Future<void> logout() async {
     try {
-      await FirebaseAuth.instance.signOut();
-      _user = null; // clear user locally
+      await _auth.signOut();
+      _userModel = null;
       notifyListeners();
     } catch (e) {
       debugPrint("Logout error: $e");

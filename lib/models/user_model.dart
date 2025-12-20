@@ -7,15 +7,13 @@ class UserModel {
   final String phone;
   final bool isAvailable;
 
-  // নতুন ফিল্ডস
-  final int lastDonationDate; // Timestamp in milliseconds
+  final int lastDonationDate;
   final int totalDonated;
   final int totalRequests;
   final int peopleHelped;
 
-  // Optional professional profile fields
   final int age;
-  final double weight; // kg
+  final double weight;
   final String address;
 
   UserModel({
