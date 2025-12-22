@@ -6,7 +6,7 @@ import '../models/user_model.dart';
 class DatabaseService {
   final _db = FirebaseDatabase.instance.ref();
 
-  Future<UserModel?> getUserData(String uid) async {
+  Future<UserModel?> getUserById(String uid) async {
     try {
       final snapshot = await _db.child('users').child(uid).get();
       if (snapshot.exists) {

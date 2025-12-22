@@ -13,7 +13,7 @@ class AuthProvider extends ChangeNotifier {
     _auth.authStateChanges().listen((firebaseUser) async {
       if (firebaseUser != null) {
         final userModel =
-        await DatabaseService().getUserData(firebaseUser.uid);
+        await DatabaseService().getUserById(firebaseUser.uid);
         _userModel = userModel;
       } else {
         _userModel = null;

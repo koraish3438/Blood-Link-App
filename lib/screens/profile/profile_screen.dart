@@ -18,8 +18,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String getLastDonationText(int timestamp) {
     if (timestamp == 0) return "No donation history yet";
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    final days = DateTime.now().difference(date).inDays;
-    return days == 0 ? "Donated today" : "Last donated $days days ago";
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return "Donated today at ${TimeOfDay.fromDateTime(date).format(context)}";
+    } else if (difference.inDays < 30) {
+      return "Last donated ${difference.inDays} days ago";
+    } else {
+      int months = (difference.inDays / 30).floor();
+      return "Last donated $months month${months > 1 ? 's' : ''} ago";
+    }
+  }
+
+  Future<void> _updateDonationDate(String uid) async {
+    DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: AppColors.primaryRed),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
+
+      if (pickedTime != null) {
+        final finalDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        await DatabaseService().updateUserData(uid, {
+          'lastDonationDate': finalDateTime.millisecondsSinceEpoch,
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Donation date updated successfully!")),
+          );
+          setState(() {});
+        }
+      }
+    }
   }
 
   void _showDeleteDialog(BuildContext context, String uid, AuthProvider authProvider) {
@@ -62,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
       ),
       body: FutureBuilder<UserModel?>(
-        future: DatabaseService().getUserData(uid),
+        future: DatabaseService().getUserById(uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
           final user = snapshot.data;
@@ -126,7 +180,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                _infoCard(Icons.history, "Last Donation", getLastDonationText(user.lastDonationDate)),
+                GestureDetector(
+                  onTap: () => _updateDonationDate(uid),
+                  child: _infoCard(
+                    Icons.history,
+                    "Last Donation (Tap to update)",
+                    getLastDonationText(user.lastDonationDate),
+                    isEditable: true,
+                  ),
+                ),
                 _infoCard(Icons.bloodtype, "Blood Group", user.bloodGroup),
                 _infoCard(Icons.phone, "Phone Number", user.phone),
                 _infoCard(Icons.location_on, "Location", user.location),
@@ -218,13 +280,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ),
   );
 
-  Widget _infoCard(IconData icon, String title, String value) => Card(
+  Widget _infoCard(IconData icon, String title, String value, {bool isEditable = false}) => Card(
     margin: const EdgeInsets.only(bottom: 10),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     child: ListTile(
       leading: Icon(icon, color: AppColors.primaryRed),
       title: Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
       subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+      trailing: isEditable ? const Icon(Icons.calendar_month, size: 20, color: AppColors.primaryRed) : null,
     ),
   );
 }
