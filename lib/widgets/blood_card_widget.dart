@@ -4,21 +4,35 @@ import '../utils/app_colors.dart';
 
 class BloodCardWidget extends StatelessWidget {
   final BloodRequestModel request;
-  final VoidCallback? onTap; // ✅ Tap support
+  final VoidCallback? onTap;
 
   const BloodCardWidget({
     super.key,
     required this.request,
-    this.onTap, // ✅ constructor
+    this.onTap,
   });
+
+  String getTimeStatus(int timestamp) {
+    if (timestamp == 0) return "Just now";
+    final postDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final difference = DateTime.now().difference(postDate);
+
+    if (difference.inHours < 1) {
+      return "Urgent";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours}h ago";
+    } else {
+      return "${difference.inDays}d ago";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Urgency color dynamically
-    final urgencyColor = request.isUrgent ? AppColors.primaryRed : Colors.grey;
+    final String timeLabel = getTimeStatus(request.timestamp);
+    final Color statusColor = timeLabel == "Urgent" ? AppColors.primaryRed : Colors.grey;
 
     return GestureDetector(
-      onTap: onTap, // ✅ interactive
+      onTap: onTap,
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         elevation: 4,
@@ -28,7 +42,6 @@ class BloodCardWidget extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Blood Group Circle
               CircleAvatar(
                 backgroundColor: AppColors.primaryRed,
                 radius: 28,
@@ -42,8 +55,6 @@ class BloodCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-
-              // Request Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,18 +73,16 @@ class BloodCardWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      request.isUrgent ? "Urgent Requirement" : "Normal",
+                      timeLabel,
                       style: TextStyle(
-                        color: urgencyColor,
-                        fontWeight: FontWeight.w600,
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Trailing arrow
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),

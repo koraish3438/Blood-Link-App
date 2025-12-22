@@ -40,8 +40,6 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
             const Text("Need Blood?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const Text("Fill the form to post a request", style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 30),
-
-            // Blood Group Dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -60,15 +58,12 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             CustomTextField(hintText: "Location (Hospital/City)", icon: Icons.local_hospital, controller: _locationController),
             const SizedBox(height: 16),
             CustomTextField(hintText: "Units Required (e.g. 2)", icon: Icons.water_drop, controller: _unitsController, keyboardType: TextInputType.number),
             const SizedBox(height: 16),
             CustomTextField(hintText: "Contact Number", icon: Icons.phone, controller: _contactController, keyboardType: TextInputType.phone),
-
             const SizedBox(height: 40),
-
             SizedBox(
               width: double.infinity,
               height: 55,
@@ -82,9 +77,7 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
                     return;
                   }
-
                   setState(() => _isLoading = true);
-
                   final request = BloodRequestModel(
                     id: '',
                     bloodGroup: selectedGroup!,
@@ -92,11 +85,9 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
                     units: _unitsController.text.trim(),
                     contact: _contactController.text.trim(),
                     userId: authProvider.user!.uid,
-                    timestamp: 0,
+                    timestamp: DateTime.now().millisecondsSinceEpoch,
                   );
-
                   await DatabaseService().addBloodRequest(request);
-
                   setState(() => _isLoading = false);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request Posted Successfully!")));
