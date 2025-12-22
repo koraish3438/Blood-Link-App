@@ -27,7 +27,6 @@ class DonorCardWidget extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Blood Group Circle
               CircleAvatar(
                 backgroundColor: AppColors.primaryRed,
                 radius: 28,
@@ -41,8 +40,6 @@ class DonorCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-
-              // Donor Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,8 +68,6 @@ class DonorCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Trailing arrow
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             ],
           ),

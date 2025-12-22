@@ -7,6 +7,8 @@ import '../../widgets/donor_card_widget.dart';
 import '../../utils/app_colors.dart';
 import 'request_blood_screen.dart';
 import '../profile/profile_screen.dart';
+import '../details/request_detail_screen.dart';
+import '../details/donor_detail_screen.dart';
 import '../../models/donor_model.dart';
 import '../../models/user_model.dart';
 
@@ -20,20 +22,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String selectedTab = "Requests";
   final searchController = TextEditingController();
-  final locationFilterController = TextEditingController(); // লোকেশন ফিল্টারের জন্য
+  final locationFilterController = TextEditingController();
   String? selectedBloodFilter;
 
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // কিবোর্ড আসার জন্য ট্রু করা হয়েছে
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom, // কিবোর্ডের জন্য প্যাডিং
+            bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 20,
             right: 20,
             top: 20,
@@ -99,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () {
-                        setState(() {}); // হোম স্ক্রিন রিফ্রেশ করবে
+                        setState(() {});
                         Navigator.pop(context);
                       },
                       child: const Text("Apply Filter", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -244,7 +246,6 @@ class _HomeScreenState extends State<HomeScreen> {
           final matchesSearch = r.bloodGroup.toLowerCase().contains(query) || r.location.toLowerCase().contains(query);
           final matchesBlood = selectedBloodFilter == null || r.bloodGroup == selectedBloodFilter;
           final matchesLoc = locFilter.isEmpty || r.location.toLowerCase().contains(locFilter);
-
           return matchesSearch && matchesBlood && matchesLoc;
         }).toList();
 
@@ -252,7 +253,16 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const BouncingScrollPhysics(),
           itemCount: filtered.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) => BloodCardWidget(request: filtered[index], onTap: () {}),
+          itemBuilder: (context, index) {
+            final request = filtered[index];
+            return BloodCardWidget(
+              request: request,
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => RequestDetailScreen(request: request))
+              ),
+            );
+          },
         );
       },
     );
@@ -272,7 +282,6 @@ class _HomeScreenState extends State<HomeScreen> {
           final matchesSearch = user.bloodGroup.toLowerCase().contains(query) || user.location.toLowerCase().contains(query);
           final matchesBlood = selectedBloodFilter == null || user.bloodGroup == selectedBloodFilter;
           final matchesLoc = locFilter.isEmpty || user.location.toLowerCase().contains(locFilter);
-
           return matchesSearch && matchesBlood && matchesLoc;
         }).map((user) => DonorModel.fromUserModel(user)).toList();
 
@@ -282,7 +291,16 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const BouncingScrollPhysics(),
           itemCount: filtered.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) => DonorCardWidget(donor: filtered[index]),
+          itemBuilder: (context, index) {
+            final donor = filtered[index];
+            return DonorCardWidget(
+              donor: donor,
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => DonorDetailScreen(donor: donor))
+              ),
+            );
+          },
         );
       },
     );

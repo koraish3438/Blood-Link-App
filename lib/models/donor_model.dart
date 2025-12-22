@@ -1,23 +1,28 @@
 class DonorModel {
+  final String id;
   final String name;
   final String bloodGroup;
   final String location;
+  final String phone;
   final bool isAvailable;
 
   DonorModel({
+    required this.id,
     required this.name,
     required this.bloodGroup,
     required this.location,
-    this.isAvailable = true,
+    required this.phone,
+    required this.isAvailable,
   });
 
-  // Optional: Convert UserModel → DonorModel
-  factory DonorModel.fromUserModel(user) {
+  factory DonorModel.fromUserModel(dynamic user) {
     return DonorModel(
-      name: user.name,
-      bloodGroup: user.bloodGroup,
-      location: user.location,
-      isAvailable: user.isAvailable,
+      id: user.uid ?? '',
+      name: user.name ?? 'Unknown',
+      bloodGroup: user.bloodGroup ?? 'N/A',
+      location: user.location ?? 'No Location',
+      phone: user.phone ?? '',
+      isAvailable: user.isAvailable ?? false,
     );
   }
 }
