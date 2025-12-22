@@ -19,15 +19,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (timestamp == 0) return "No donation history yet";
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     final now = DateTime.now();
-    final difference = now.difference(date);
+    final difference = now.difference(date).inDays;
 
-    if (difference.inDays == 0) {
-      return "Donated today at ${TimeOfDay.fromDateTime(date).format(context)}";
-    } else if (difference.inDays < 30) {
-      return "Last donated ${difference.inDays} days ago";
+    if (difference >= 90) {
+      return "Available to donate";
     } else {
-      int months = (difference.inDays / 30).floor();
-      return "Last donated $months month${months > 1 ? 's' : ''} ago";
+      if (difference == 0) return "Donated today";
+      return "Last donated $difference days ago";
     }
   }
 
@@ -62,15 +60,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           pickedTime.minute,
         );
 
-        await DatabaseService().updateUserData(uid, {
-          'lastDonationDate': finalDateTime.millisecondsSinceEpoch,
-        });
+        String? result = await DatabaseService().updateDonationDate(
+            uid, finalDateTime.millisecondsSinceEpoch, 90);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Donation date updated successfully!")),
-          );
-          setState(() {});
+          if (result == "Success") {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Donation history updated!")));
+            setState(() {});
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(result ?? "Error"),
+                backgroundColor: Colors.orange));
+          }
         }
       }
     }
@@ -97,9 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
             onPressed: () async {
               try {
-                // Permanent delete using AuthProvider
                 await authProvider.deleteAccountPermanently();
-
                 if (mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
@@ -160,10 +160,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: CircleAvatar(
                     radius: 55,
                     backgroundColor: AppColors.primaryRed,
-                    backgroundImage: (user.profilePic != null && user.profilePic!.isNotEmpty)
+                    backgroundImage: (user.profilePic?.isNotEmpty ?? false)
                         ? NetworkImage(user.profilePic!)
                         : null,
-                    child: (user.profilePic == null || user.profilePic!.isEmpty)
+                    child: (user.profilePic?.isEmpty ?? true)
                         ? const Icon(Icons.person, size: 60, color: Colors.white)
                         : null,
                   ),

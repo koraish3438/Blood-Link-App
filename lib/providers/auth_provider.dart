@@ -12,8 +12,7 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     _auth.authStateChanges().listen((firebaseUser) async {
       if (firebaseUser != null) {
-        final userModel =
-        await DatabaseService().getUserById(firebaseUser.uid);
+        final userModel = await DatabaseService().getUserById(firebaseUser.uid);
         _userModel = userModel;
       } else {
         _userModel = null;
@@ -30,20 +29,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Permanent delete account from Auth + Database
   Future<void> deleteAccountPermanently() async {
-    final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
-
-    final uid = currentUser.uid;
-
-    // Delete user + blood requests from Realtime DB
-    await DatabaseService().deleteUserAccountCompletely(uid);
-
-    // Delete user from FirebaseAuth
-    await currentUser.delete();
-
-    _userModel = null;
-    notifyListeners();
+    if (_userModel == null) return;
+    try {
+      await DatabaseService().deleteUserAccount(_userModel!.uid);
+      await _auth.currentUser?.delete();
+      _userModel = null;
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
   }
 }

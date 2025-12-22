@@ -6,7 +6,6 @@ import '../models/user_model.dart';
 class DatabaseService {
   final _db = FirebaseDatabase.instance.ref();
 
-  // Get user by uid
   Future<UserModel?> getUserById(String uid) async {
     try {
       final snapshot = await _db.child('users').child(uid).get();
@@ -20,7 +19,6 @@ class DatabaseService {
     }
   }
 
-  // Update user data
   Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
       await _db.child('users').child(uid).update(data);
@@ -30,7 +28,6 @@ class DatabaseService {
     }
   }
 
-  // Update availability
   Future<void> updateUserAvailability(String uid, bool isAvailable) async {
     try {
       await _db.child('users').child(uid).update({'isAvailable': isAvailable});
@@ -40,7 +37,6 @@ class DatabaseService {
     }
   }
 
-  // Get donors
   Stream<List<UserModel>> getDonors() {
     return _db.child('users').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
@@ -52,7 +48,6 @@ class DatabaseService {
     });
   }
 
-  // Add blood request
   Future<void> addBloodRequest(BloodRequestModel request) async {
     try {
       await _db.child('blood_requests').push().set({
@@ -65,13 +60,18 @@ class DatabaseService {
         'status': 'pending',
         'timestamp': ServerValue.timestamp,
       });
+      final snapshot = await _db.child('users').child(request.userId).get();
+      if (snapshot.exists) {
+        final user = snapshot.value as Map;
+        int currentRequests = (user['requests'] ?? 0) as int;
+        await _db.child('users').child(request.userId).update({'requests': currentRequests + 1});
+      }
     } catch (e) {
       debugPrint("Error adding blood request: $e");
       rethrow;
     }
   }
 
-  // Get all blood requests
   Stream<List<BloodRequestModel>> getBloodRequests() {
     return _db.child('blood_requests').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
@@ -86,19 +86,16 @@ class DatabaseService {
     });
   }
 
-  // Get user stats
   Future<Map<String, int>> getUserStats(String uid) async {
     int donated = 0;
     int requests = 0;
     int helped = 0;
     try {
-      final snapshot = await _db.child('blood_requests').get();
+      final snapshot = await _db.child('users').child(uid).get();
       if (snapshot.exists) {
-        final map = snapshot.value as Map<dynamic, dynamic>;
-        donated = map.values
-            .where((v) => (v as Map)['donorId'] == uid && v['status'] == 'completed')
-            .length;
-        requests = map.values.where((v) => (v as Map)['userId'] == uid).length;
+        final user = snapshot.value as Map;
+        donated = (user['donated'] ?? 0) as int;
+        requests = (user['requests'] ?? 0) as int;
         helped = donated;
       }
     } catch (e) {
@@ -107,21 +104,36 @@ class DatabaseService {
     return {'donated': donated, 'requests': requests, 'helped': helped};
   }
 
-  // Delete user profile + blood requests permanently
-  Future<void> deleteUserAccountCompletely(String uid) async {
-    try {
-      // Delete user profile
-      await _db.child('users').child(uid).remove();
+  Future<String?> updateDonationDate(String uid, int timestamp, int minDays) async {
+    final snapshot = await _db.child('users').child(uid).get();
+    if (!snapshot.exists) return "User not found";
 
-      // Delete all blood requests made by this user
-      final snapshot =
-      await _db.child('blood_requests').orderByChild('userId').equalTo(uid).get();
-      for (var child in snapshot.children) {
-        await child.ref.remove();
+    final user = snapshot.value as Map;
+    int lastDonation = (user['lastDonationDate'] ?? 0) as int;
+
+    if (lastDonation != 0) {
+      final lastDate = DateTime.fromMillisecondsSinceEpoch(lastDonation);
+      final now = DateTime.now();
+      int diff = now.difference(lastDate).inDays;
+      if (diff < minDays) {
+        return "You can update after ${minDays - diff} days";
       }
-    } catch (e) {
-      debugPrint("Error deleting account completely: $e");
-      rethrow;
+    }
+
+    int currentDonated = (user['donated'] ?? 0) as int;
+    await _db.child('users').child(uid).update({
+      'lastDonationDate': timestamp,
+      'donated': currentDonated + 1,
+      'isAvailable': false,
+    });
+    return "Success";
+  }
+
+  Future<void> deleteUserAccount(String uid) async {
+    await _db.child('users').child(uid).remove();
+    final snapshot = await _db.child('blood_requests').orderByChild('userId').equalTo(uid).get();
+    for (var child in snapshot.children) {
+      await child.ref.remove();
     }
   }
 }

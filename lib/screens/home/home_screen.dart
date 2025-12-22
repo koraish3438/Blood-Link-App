@@ -25,6 +25,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final locationFilterController = TextEditingController();
   String? selectedBloodFilter;
 
+  String getDonorEligibility(int timestamp) {
+    if (timestamp == 0) return "Available to donate";
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    if (difference >= 90) return "Available to donate";
+    return "Donated $difference days ago";
+  }
+
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,

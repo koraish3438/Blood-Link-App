@@ -16,12 +16,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(); // নতুন
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -52,17 +54,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const Text("Create Account", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primaryRed)),
               const Text("Join BloodLink and save lives", style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 30),
-
               CustomTextField(hintText: "Full Name", icon: Icons.person_outline, controller: _nameController),
               const SizedBox(height: 16),
-
               CustomTextField(hintText: "Email", icon: Icons.email_outlined, controller: _emailController, keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 16),
-
-              // নতুন ফোন নাম্বার ফিল্ড
               CustomTextField(hintText: "Phone Number", icon: Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
-
               Row(
                 children: [
                   Expanded(
@@ -92,13 +89,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-
-              CustomTextField(hintText: "Password", icon: Icons.lock_outline, isPassword: true, controller: _passwordController),
+              CustomTextField(
+                hintText: "Password",
+                icon: Icons.lock_outline,
+                isPassword: _obscurePassword,
+                controller: _passwordController,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
+              ),
               const SizedBox(height: 16),
-
-              CustomTextField(hintText: "Confirm Password", icon: Icons.lock_reset, isPassword: true, controller: _confirmPasswordController),
+              CustomTextField(
+                hintText: "Confirm Password",
+                icon: Icons.lock_reset,
+                isPassword: _obscureConfirmPassword,
+                controller: _confirmPasswordController,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                    });
+                  },
+                ),
+              ),
               const SizedBox(height: 30),
-
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -116,20 +142,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match!"), backgroundColor: Colors.orange));
                       return;
                     }
-
                     setState(() => _isLoading = true);
-
                     String? result = await FirebaseAuthService().registerUser(
                       email: _emailController.text.trim(),
                       password: _passwordController.text.trim(),
                       name: _nameController.text.trim(),
                       bloodGroup: selectedGroup!,
                       location: _locationController.text.trim(),
-                      phone: _phoneController.text.trim(), // ফোন পাঠানো হচ্ছে
+                      phone: _phoneController.text.trim(),
                     );
-
                     setState(() => _isLoading = false);
-
                     if (result == "Success") {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Please Login.")));

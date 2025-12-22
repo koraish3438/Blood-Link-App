@@ -5,8 +5,9 @@ class CustomTextField extends StatelessWidget {
   final String hintText;
   final IconData icon;
   final bool isPassword;
-  final TextEditingController? controller; // ডাটা ধরার জন্য
-  final TextInputType? keyboardType;      // ইমেইল বা নাম আলাদা করার জন্য
+  final TextEditingController? controller;
+  final TextInputType? keyboardType;
+  final Widget? suffixIcon;
 
   const CustomTextField({
     super.key,
@@ -15,6 +16,7 @@ class CustomTextField extends StatelessWidget {
     this.isPassword = false,
     this.controller,
     this.keyboardType,
+    this.suffixIcon,
   });
 
   @override
@@ -32,14 +34,14 @@ class CustomTextField extends StatelessWidget {
         ],
       ),
       child: TextField(
-        controller: controller, // কন্ট্রোলারটি এখানে বসবে
+        controller: controller,
         obscureText: isPassword,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.primaryRed, size: 20),
-          // InputBorder.none ব্যবহার করছি কারণ কন্টেইনারে অলরেডি শ্যাডো এবং বর্ডার দেওয়া যায়
+          suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
         ),

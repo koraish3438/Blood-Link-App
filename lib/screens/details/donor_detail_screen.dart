@@ -16,6 +16,20 @@ class DonorDetailScreen extends StatelessWidget {
     }
   }
 
+  String getLastDonationText(int timestamp) {
+    if (timestamp == 0) return "No donation history yet";
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+
+    if (difference >= 90) {
+      return "Available to donate";
+    } else {
+      if (difference == 0) return "Donated today";
+      return "Last donated $difference days ago";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +49,12 @@ class DonorDetailScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: AppColors.primaryRed.withOpacity(0.1),
-                    child: const Icon(Icons.person, size: 80, color: AppColors.primaryRed),
+                    backgroundImage: (donor.profilePic != null && donor.profilePic!.isNotEmpty)
+                        ? NetworkImage(donor.profilePic!)
+                        : null,
+                    child: (donor.profilePic == null || donor.profilePic!.isEmpty)
+                        ? const Icon(Icons.person, size: 80, color: AppColors.primaryRed)
+                        : null,
                   ),
                   CircleAvatar(
                     radius: 18,
@@ -61,11 +80,21 @@ class DonorDetailScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  _infoTile(Icons.email_outlined, "Email", donor.email ?? "Not provided"),
+                  const Divider(indent: 70),
                   _infoTile(Icons.bloodtype, "Blood Group", donor.bloodGroup),
+                  const Divider(indent: 70),
+                  _infoTile(Icons.phone, "Phone", donor.phone),
                   const Divider(indent: 70),
                   _infoTile(Icons.location_on, "Location", donor.location),
                   const Divider(indent: 70),
-                  _infoTile(Icons.phone, "Phone", donor.phone),
+                  _infoTile(Icons.cake, "Age", "${donor.age}"),
+                  const Divider(indent: 70),
+                  _infoTile(Icons.monitor_weight, "Weight", "${donor.weight} kg"),
+                  const Divider(indent: 70),
+                  _infoTile(Icons.history, "Last Donation", getLastDonationText(donor.lastDonationDate)),
+                  const Divider(indent: 70),
+                  _infoTile(Icons.home_work_outlined, "Address", donor.address ?? "Not provided"),
                 ],
               ),
             ),
@@ -76,12 +105,15 @@ class DonorDetailScreen extends StatelessWidget {
                 height: 55,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => _makeCall(donor.phone),
                   icon: const Icon(Icons.call, color: Colors.white),
-                  label: const Text("Call Donor", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    "Call Donor",
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
           ],
@@ -94,7 +126,10 @@ class DonorDetailScreen extends StatelessWidget {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: AppColors.primaryRed.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: AppColors.primaryRed.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(icon, color: AppColors.primaryRed),
       ),
       title: Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),

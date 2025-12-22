@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -35,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               const SizedBox(height: 100),
-              // Logo & Title
               const Icon(Icons.bloodtype, size: 80, color: AppColors.primaryRed),
               const SizedBox(height: 10),
               Text(
@@ -47,15 +47,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const Text("Connecting donors, saving lives", style: TextStyle(color: Colors.grey)),
-
               const SizedBox(height: 60),
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text("Welcome Back", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 20),
-
-              // Email Field
               CustomTextField(
                 hintText: "Email",
                 icon: Icons.email_outlined,
@@ -63,17 +60,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
-
-              // Password Field
               CustomTextField(
                 hintText: "Password",
                 icon: Icons.lock_outline,
-                isPassword: true,
+                isPassword: _obscurePassword,
                 controller: _passwordController,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
               ),
-
               const SizedBox(height: 10),
-              // Forgot Password (Optional design element)
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -81,10 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text("Forgot Password?", style: TextStyle(color: Colors.grey)),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Login Button
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -100,16 +101,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                       return;
                     }
-
                     setState(() => _isLoading = true);
-
                     String? result = await FirebaseAuthService().loginUser(
                         _emailController.text.trim(),
                         _passwordController.text.trim()
                     );
-
                     setState(() => _isLoading = false);
-
                     if (result == "Success") {
                       Navigator.pushReplacement(
                           context,
@@ -129,10 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // --- এই অংশটি আপনার দরকার ছিল (Register Link) ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
