@@ -81,17 +81,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: const Text("Delete Account?", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        content: const Text("This action is permanent and all your data will be removed. Are you sure?"),
+        title: const Text(
+          "Delete Account?",
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          "This action is permanent. All your data and blood requests will be removed. Are you sure?",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Keep Account", style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Keep Account", style: TextStyle(color: Colors.grey)),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, elevation: 0),
             onPressed: () async {
-              await DatabaseService().deleteUserAccount(uid);
-              await authProvider.logout();
-              if (mounted) {
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+              try {
+                // Permanent delete using AuthProvider
+                await authProvider.deleteAccountPermanently();
+
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error deleting account: $e")),
+                  );
+                }
               }
             },
             child: const Text("Delete Now", style: TextStyle(color: Colors.white)),
@@ -118,7 +139,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: FutureBuilder<UserModel?>(
         future: DatabaseService().getUserById(uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return const Center(child: CircularProgressIndicator());
+
           final user = snapshot.data;
           if (user == null) return const Center(child: Text("Error loading profile"));
 
@@ -128,12 +151,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [AppColors.primaryRed, Color(0xFFB71C1C)])),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [AppColors.primaryRed, Color(0xFFB71C1C)],
+                    ),
+                  ),
                   child: CircleAvatar(
                     radius: 55,
                     backgroundColor: AppColors.primaryRed,
-                    backgroundImage: (user.profilePic != null && user.profilePic!.isNotEmpty) ? NetworkImage(user.profilePic!) : null,
-                    child: (user.profilePic == null || user.profilePic!.isEmpty) ? const Icon(Icons.person, size: 60, color: Colors.white) : null,
+                    backgroundImage: (user.profilePic != null && user.profilePic!.isNotEmpty)
+                        ? NetworkImage(user.profilePic!)
+                        : null,
+                    child: (user.profilePic == null || user.profilePic!.isEmpty)
+                        ? const Icon(Icons.person, size: 60, color: Colors.white)
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -163,7 +195,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 _buildActionTile(Icons.edit, "Edit Profile Information", () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen(user: user))).then((_) => setState(() {}));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => EditProfileScreen(user: user)),
+                  ).then((_) => setState(() {}));
                 }),
                 const SizedBox(height: 10),
                 Card(
@@ -212,7 +247,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     onPressed: () async {
                       await authProvider.logout();
-                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                            (route) => false,
+                      );
                     },
                     child: const Text("Logout Account", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
@@ -236,7 +275,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text("Once you delete your account, there is no going back. All your records will be cleared.", style: TextStyle(fontSize: 12, color: Colors.black54)),
+                      const Text(
+                        "Once you delete your account, there is no going back. All your records will be cleared.",
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,

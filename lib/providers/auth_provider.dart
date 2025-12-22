@@ -29,4 +29,21 @@ class AuthProvider extends ChangeNotifier {
     _userModel = null;
     notifyListeners();
   }
+
+  // Permanent delete account from Auth + Database
+  Future<void> deleteAccountPermanently() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    final uid = currentUser.uid;
+
+    // Delete user + blood requests from Realtime DB
+    await DatabaseService().deleteUserAccountCompletely(uid);
+
+    // Delete user from FirebaseAuth
+    await currentUser.delete();
+
+    _userModel = null;
+    notifyListeners();
+  }
 }
