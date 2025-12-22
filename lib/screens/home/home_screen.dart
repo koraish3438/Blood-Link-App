@@ -279,7 +279,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final locFilter = locationFilterController.text.toLowerCase();
 
         final filtered = snapshot.data!.where((user) {
-          final matchesSearch = user.bloodGroup.toLowerCase().contains(query) || user.location.toLowerCase().contains(query);
+          final matchesSearch = user.name.toLowerCase().contains(query) ||
+              user.bloodGroup.toLowerCase().contains(query) ||
+              user.location.toLowerCase().contains(query);
           final matchesBlood = selectedBloodFilter == null || user.bloodGroup == selectedBloodFilter;
           final matchesLoc = locFilter.isEmpty || user.location.toLowerCase().contains(locFilter);
           return matchesSearch && matchesBlood && matchesLoc;

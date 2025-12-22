@@ -17,12 +17,12 @@ class DonorModel {
 
   factory DonorModel.fromUserModel(dynamic user) {
     return DonorModel(
-      id: user.uid ?? '',
-      name: user.name ?? 'Unknown',
-      bloodGroup: user.bloodGroup ?? 'N/A',
-      location: user.location ?? 'No Location',
-      phone: user.phone ?? '',
-      isAvailable: user.isAvailable ?? false,
+      id: user.uid,
+      name: user.name,
+      bloodGroup: user.bloodGroup,
+      location: user.location,
+      phone: user.phone,
+      isAvailable: user.isAvailable,
     );
   }
 }

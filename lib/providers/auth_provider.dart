@@ -12,9 +12,9 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider() {
     _auth.authStateChanges().listen((firebaseUser) async {
       if (firebaseUser != null) {
-        // Firebase থেকে UserModel load করা
-        final userMap = await DatabaseService().getUserById(firebaseUser.uid);
-        _userModel = UserModel.fromMap(userMap);
+        final userModel =
+        await DatabaseService().getUserData(firebaseUser.uid);
+        _userModel = userModel;
       } else {
         _userModel = null;
       }
@@ -24,14 +24,9 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isAuthenticated => _userModel != null;
 
-  // Logout
   Future<void> logout() async {
-    try {
-      await _auth.signOut();
-      _userModel = null;
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Logout error: $e");
-    }
+    await _auth.signOut();
+    _userModel = null;
+    notifyListeners();
   }
 }

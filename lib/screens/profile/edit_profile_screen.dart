@@ -40,8 +40,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        backgroundColor: AppColors.primaryRed, // ব্যাকগ্রাউন্ড লাল
-        foregroundColor: Colors.white,         // টেক্সট ও আইকন সাদা
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
@@ -58,10 +58,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(colors: [AppColors.primaryRed, Color(0xFFB71C1C)]),
                   ),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 55,
                     backgroundColor: AppColors.primaryRed,
-                    child: Icon(Icons.person, size: 60, color: Colors.white),
+                    backgroundImage: (widget.user.profilePic != null && widget.user.profilePic!.isNotEmpty)
+                        ? NetworkImage(widget.user.profilePic!)
+                        : null,
+                    child: (widget.user.profilePic == null || widget.user.profilePic!.isEmpty)
+                        ? const Icon(Icons.person, size: 60, color: Colors.white)
+                        : null,
                   ),
                 ),
                 const CircleAvatar(
@@ -153,7 +158,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'location': _locationController.text.trim(),
         'address': _addressController.text.trim(),
         'age': int.tryParse(_ageController.text.trim()) ?? widget.user.age,
-        'weight': int.tryParse(_weightController.text.trim()) ?? widget.user.weight,
+        'weight': double.tryParse(_weightController.text.trim()) ?? widget.user.weight,
         'isAvailable': _availability,
       });
       if (mounted) {
