@@ -20,39 +20,51 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String selectedTab = "Requests";
   final searchController = TextEditingController();
+  final locationFilterController = TextEditingController(); // লোকেশন ফিল্টারের জন্য
   String? selectedBloodFilter;
 
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true, // কিবোর্ড আসার জন্য ট্রু করা হয়েছে
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom, // কিবোর্ডের জন্য প্যাডিং
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setModalState) {
+              return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Filter by Blood Group", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text("Filter Options", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       TextButton(
                         onPressed: () {
-                          setState(() => selectedBloodFilter = null);
+                          setState(() {
+                            selectedBloodFilter = null;
+                            locationFilterController.clear();
+                          });
                           Navigator.pop(context);
                         },
-                        child: const Text("Clear", style: TextStyle(color: AppColors.primaryRed)),
+                        child: const Text("Clear All", style: TextStyle(color: AppColors.primaryRed)),
                       )
                     ],
                   ),
                   const SizedBox(height: 15),
+                  const Text("Blood Group", style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
                   Wrap(
-                    spacing: 10,
+                    spacing: 8,
                     children: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map((group) {
                       final bool isSelected = selectedBloodFilter == group;
                       return ChoiceChip(
@@ -61,17 +73,43 @@ class _HomeScreenState extends State<HomeScreen> {
                         selectedColor: AppColors.primaryRed,
                         labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
                         onSelected: (selected) {
-                          setState(() => selectedBloodFilter = selected ? group : null);
-                          Navigator.pop(context);
+                          setModalState(() => selectedBloodFilter = selected ? group : null);
                         },
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 20),
+                  const Text("Location (Hospital/City)", style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: locationFilterController,
+                    decoration: InputDecoration(
+                      hintText: "Enter hospital or city name",
+                      prefixIcon: const Icon(Icons.location_on, color: AppColors.primaryRed),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        setState(() {}); // হোম স্ক্রিন রিফ্রেশ করবে
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Apply Filter", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -143,14 +181,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: TextField(
                         controller: searchController,
                         decoration: const InputDecoration(
-                          hintText: "Search by blood group or location",
+                          hintText: "Search here...",
                           border: InputBorder.none,
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.filter_list, color: selectedBloodFilter != null ? Colors.blue : AppColors.primaryRed),
+                      icon: Icon(
+                        Icons.filter_list,
+                        color: (selectedBloodFilter != null || locationFilterController.text.isNotEmpty)
+                            ? Colors.blue
+                            : AppColors.primaryRed,
+                      ),
                       onPressed: _showFilterSheet,
                     ),
                   ],
@@ -195,10 +238,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No blood requests found"));
 
         final query = searchController.text.toLowerCase();
+        final locFilter = locationFilterController.text.toLowerCase();
+
         final filtered = snapshot.data!.where((r) {
           final matchesSearch = r.bloodGroup.toLowerCase().contains(query) || r.location.toLowerCase().contains(query);
-          final matchesFilter = selectedBloodFilter == null || r.bloodGroup == selectedBloodFilter;
-          return matchesSearch && matchesFilter;
+          final matchesBlood = selectedBloodFilter == null || r.bloodGroup == selectedBloodFilter;
+          final matchesLoc = locFilter.isEmpty || r.location.toLowerCase().contains(locFilter);
+
+          return matchesSearch && matchesBlood && matchesLoc;
         }).toList();
 
         return ListView.separated(
@@ -219,10 +266,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) return const Center(child: Text("No donors available"));
 
         final query = searchController.text.toLowerCase();
+        final locFilter = locationFilterController.text.toLowerCase();
+
         final filtered = snapshot.data!.where((user) {
           final matchesSearch = user.bloodGroup.toLowerCase().contains(query) || user.location.toLowerCase().contains(query);
-          final matchesFilter = selectedBloodFilter == null || user.bloodGroup == selectedBloodFilter;
-          return matchesSearch && matchesFilter;
+          final matchesBlood = selectedBloodFilter == null || user.bloodGroup == selectedBloodFilter;
+          final matchesLoc = locFilter.isEmpty || user.location.toLowerCase().contains(locFilter);
+
+          return matchesSearch && matchesBlood && matchesLoc;
         }).map((user) => DonorModel.fromUserModel(user)).toList();
 
         if (filtered.isEmpty) return const Center(child: Text("No donors match your criteria"));
