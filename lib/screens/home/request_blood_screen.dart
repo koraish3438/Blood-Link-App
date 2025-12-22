@@ -28,8 +28,8 @@ class _RequestBloodScreenState extends State<RequestBloodScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Request Blood"),
-        backgroundColor: AppColors.primaryRed, // ব্যাকগ্রাউন্ড লাল
-        foregroundColor: Colors.white,         // টেক্সট ও আইকন সাদা
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
