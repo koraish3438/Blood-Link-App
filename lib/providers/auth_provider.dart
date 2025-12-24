@@ -30,14 +30,25 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> deleteAccountPermanently() async {
-    if (_userModel == null) return;
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
     try {
-      await DatabaseService().deleteUserAccount(_userModel!.uid);
-      await _auth.currentUser?.delete();
+      String uid = currentUser.uid;
+
+      await DatabaseService().deleteUserAccount(uid);
+
+      await currentUser.delete();
+
       _userModel = null;
       notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw "For security, please logout and login again to delete your account.";
+      }
+      throw e.message ?? "An error occurred";
     } catch (e) {
-      rethrow;
+      throw e.toString();
     }
   }
 }

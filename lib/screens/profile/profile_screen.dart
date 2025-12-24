@@ -128,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final uid = authProvider.user?.uid ?? "";
 
     return Scaffold(
+      key: ValueKey(uid),
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("My Profile"),
@@ -136,14 +137,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: FutureBuilder<UserModel?>(
+      body: uid.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : FutureBuilder<UserModel?>(
         future: DatabaseService().getUserById(uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting)
             return const Center(child: CircularProgressIndicator());
 
           final user = snapshot.data;
-          if (user == null) return const Center(child: Text("Error loading profile"));
+          if (user == null) return const Center(child: Text("Profile not initialized. Please update info."));
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -247,11 +250,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     onPressed: () async {
                       await authProvider.logout();
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                            (route) => false,
-                      );
+                      if (mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              (route) => false,
+                        );
+                      }
                     },
                     child: const Text("Logout Account", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                   ),

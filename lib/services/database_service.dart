@@ -6,7 +6,16 @@ import '../models/user_model.dart';
 class DatabaseService {
   final _db = FirebaseDatabase.instance.ref();
 
+  Future<void> saveUserToDatabase(UserModel user) async {
+    try {
+      await _db.child('users').child(user.uid).set(user.toMap());
+    } catch (e) {
+      debugPrint("$e");
+    }
+  }
+
   Future<UserModel?> getUserById(String uid) async {
+    if (uid.isEmpty) return null;
     try {
       final snapshot = await _db.child('users').child(uid).get();
       if (snapshot.exists) {
@@ -14,7 +23,6 @@ class DatabaseService {
       }
       return null;
     } catch (e) {
-      debugPrint("Error fetching user data: $e");
       return null;
     }
   }
@@ -23,7 +31,6 @@ class DatabaseService {
     try {
       await _db.child('users').child(uid).update(data);
     } catch (e) {
-      debugPrint("Error updating profile: $e");
       rethrow;
     }
   }
@@ -32,7 +39,6 @@ class DatabaseService {
     try {
       await _db.child('users').child(uid).update({'isAvailable': isAvailable});
     } catch (e) {
-      debugPrint("Error updating availability: $e");
       rethrow;
     }
   }
@@ -41,10 +47,15 @@ class DatabaseService {
     return _db.child('users').onValue.map((event) {
       final Map<dynamic, dynamic>? map = event.snapshot.value as Map?;
       if (map == null) return [];
-      return map.values
-          .map((v) => UserModel.fromMap(v as Map<dynamic, dynamic>))
-          .where((user) => user.isAvailable == true)
-          .toList();
+
+      List<UserModel> donors = [];
+      map.forEach((key, value) {
+        final user = UserModel.fromMap(value as Map<dynamic, dynamic>);
+        if (user.isAvailable == true) {
+          donors.add(user);
+        }
+      });
+      return donors;
     });
   }
 
@@ -67,7 +78,6 @@ class DatabaseService {
         await _db.child('users').child(request.userId).update({'requests': currentRequests + 1});
       }
     } catch (e) {
-      debugPrint("Error adding blood request: $e");
       rethrow;
     }
   }
@@ -89,19 +99,17 @@ class DatabaseService {
   Future<Map<String, int>> getUserStats(String uid) async {
     int donated = 0;
     int requests = 0;
-    int helped = 0;
     try {
       final snapshot = await _db.child('users').child(uid).get();
       if (snapshot.exists) {
         final user = snapshot.value as Map;
         donated = (user['donated'] ?? 0) as int;
         requests = (user['requests'] ?? 0) as int;
-        helped = donated;
       }
     } catch (e) {
-      debugPrint("Error fetching user stats: $e");
+      debugPrint("$e");
     }
-    return {'donated': donated, 'requests': requests, 'helped': helped};
+    return {'donated': donated, 'requests': requests, 'helped': donated};
   }
 
   Future<String?> updateDonationDate(String uid, int timestamp, int minDays) async {
@@ -130,10 +138,16 @@ class DatabaseService {
   }
 
   Future<void> deleteUserAccount(String uid) async {
-    await _db.child('users').child(uid).remove();
-    final snapshot = await _db.child('blood_requests').orderByChild('userId').equalTo(uid).get();
-    for (var child in snapshot.children) {
-      await child.ref.remove();
+    try {
+      final snapshot = await _db.child('blood_requests').orderByChild('userId').equalTo(uid).get();
+      if (snapshot.exists) {
+        for (var child in snapshot.children) {
+          await child.ref.remove();
+        }
+      }
+      await _db.child('users').child(uid).remove();
+    } catch (e) {
+      rethrow;
     }
   }
 }
