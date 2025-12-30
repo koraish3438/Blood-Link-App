@@ -7,7 +7,7 @@
 
 ---
 
-## 📌 About the Project
+## 📌 About the Project=======
 
 **Blood Link** is a mobile application designed to help people find blood donors quickly during emergencies.  
 The app allows users to **register as donors**, **post blood requests**, and **search donors based on blood group and location**.
@@ -16,7 +16,7 @@ This project is built with **Flutter** and powered by **Firebase**.
 
 ---
 
-## 🚀 Features
+## 🚀 Features=======
 
 - 🔐 User Authentication (Login / Register)
 - 👤 Donor Profile Management
@@ -28,7 +28,7 @@ This project is built with **Flutter** and powered by **Firebase**.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack=======
 
 - **Frontend:** Flutter
 - **Backend:** Firebase Authentication
@@ -37,7 +37,7 @@ This project is built with **Flutter** and powered by **Firebase**.
 
 ---
 
-## 📸 App Screenshots
+## 📸 App Screenshots=======
 
 <p align="center">
   <img src="https://github.com/koraish3438/Blood-Link-App/blob/a15417468ca05df7e2c9de963b571992e100fb8a/Screenshot_2025-12-24-09-39-28-55_eacb9b8154da7a9e0bfb61373fe62197.jpg" width="250"/>
